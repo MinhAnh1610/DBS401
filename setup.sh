@@ -40,7 +40,7 @@ msi() {
 
 requirements() {
 	apt-get update -y &&
-	apt-get -y install apache2 mariadb-server &&
+	apt-get -y install apache2 mariadb-server expect &&
 	systemctl enable --now mariadb apache2 &&
 	msi &&
 	apt-get install -y 	php8.1 libapache2-mod-php8.1 php8.1-mysql php8.1-mysqli &&
