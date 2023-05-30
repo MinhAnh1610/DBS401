@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# check if database 'library' & user 'library'@'localhost' are existed
+# this will delete all data if existed
 db_check() {
 	db_name="library"
 	user="library"
@@ -10,8 +12,9 @@ db_check() {
 	[[ -n "${user_exists}" ]] && (mysql -e "DROP USER '${user}'@'${host}';")
 }
 
+# check if mysql_secure_installation was executed before this script
+# if not, run mysql_secure_installation as usual
 msi() {
-	# check if mysql_secure_installation was executed before this script...
 	config_file="/etc/mysql/my.cnf"
 	[[ -f "${config_file}" ]] && 
 	(db_check) || 
@@ -52,6 +55,7 @@ msi() {
 	echo "$SECURE_MYSQL" )
 }
 
+# check for requirements if installed or not, and install missed package
 requirements() {
 	packages=("apache2" "mariadb-server" "expect" "php8.1" "libapache2-mod-php8.1" "php8.1-mysql")
 
@@ -60,9 +64,11 @@ requirements() {
 		echo "- ${package} already installed!" ||
 		( apt-get install -y $package && echo "- ${package} have been installed!" || echo "- Error: ${package} not installed!")
 	done
+	systemctl enable --now mariadb apache2
+	systemctl restart apache2 mariadb
 }
 
-
+# setup db, setup web dir, this will clear all old data if existed.
 setup() {
 	web_root="/var/www/html"
 	web_dir="/library"
@@ -82,4 +88,4 @@ main() {
 	setup >> debug.log 2>&1) 
 }
 
-main
+main && firefox localhost/library
