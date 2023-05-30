@@ -73,6 +73,8 @@ sudo chmod -R 755 /var/www/html/ && sudo chown -R www-data:www-data /var/www/htm
 
 Now we can access to the web same as Windows with XAMPP.
 
+> Another way, much more easier, `setup.sh` script
+
 ---
 
 ## **🔐 Default credentials**
