@@ -88,4 +88,4 @@ main() {
 	setup >> debug.log 2>&1) 
 }
 
-main && firefox localhost/library
+main && echo "You can access web in: http://localhost/library/ (Ctrl + Click to open on your browser)"
