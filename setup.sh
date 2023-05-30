@@ -1,7 +1,21 @@
 #!/bin/bash
 
+db_check() {
+	db_name="library"
+	user="library"
+	host="localhost"
+	database_exists=$(mysql -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${db_name}';" --skip-column-names 2>/dev/null)
+	user_exists=$(mysql -e "SELECT User FROM mysql.user WHERE User='${user}' AND Host='${host}';" --skip-column-names 2>/dev/null)
+	[[ -n "${database_exists}" ]] && (mysql -e "DROP DATABASE ${db_name}")
+	[[ -n "${user_exists}" ]] && (mysql -e "DROP USER '${user}'@'${host}';")
+}
+
 msi() {
-	SECURE_MYSQL=$(expect -c "
+	# check if mysql_secure_installation was executed before this script...
+	config_file="/etc/mysql/my.cnf"
+	[[ -f "${config_file}" ]] && 
+	(db_check) || 
+	( SECURE_MYSQL=$(expect -c "
 	set timeout 10
 	spawn mysql_secure_installation
 
@@ -35,20 +49,25 @@ msi() {
 	expect eof
 	")
 
-	echo "$SECURE_MYSQL"
+	echo "$SECURE_MYSQL" )
 }
 
 requirements() {
-	apt-get update -y &&
-	apt-get -y install apache2 mariadb-server expect &&
-	systemctl enable --now mariadb apache2 &&
-	msi &&
-	apt-get install -y 	php8.1 libapache2-mod-php8.1 php8.1-mysql php8.1-mysqli &&
-	systemctl restart apache2
+	packages=("apache2" "mariadb-server" "expect" "php8.1" "libapache2-mod-php8.1" "php8.1-mysql")
+
+	for package in "${packages[@]}"; do
+    	dpkg -s "$package" &> /dev/null &&
+		echo "- ${package} already installed!" ||
+		( apt-get install -y $package && echo "- ${package} have been installed!" || echo "- Error: ${package} not installed!")
+	done
 }
 
 
 setup() {
+	web_root="/var/www/html"
+	web_dir="/library"
+	[[ -f "${web_root}${web_dir}" ]] && (rm -rf "${web_root}${web_dir}")
+	msi &&
 	mysql -u root -ptoor < library.sql &&
 	cp -r library/ /var/www/html/ &&
 	chmod -R 755 /var/www/html/ &&
@@ -57,14 +76,10 @@ setup() {
 
 main() {
 	[ "$EUID" -ne 0 ] && (printf "[x] Not running with root privileges, please run this script again with root privileges!\n") ||
-	
-	(
-	printf "[+] Installing requirements...\n" &&
-	requirements &&
+	(printf "[+] Installing requirements...\n" &&
+	requirements > debug.log 2>&1  &&
 	printf "[+] Setting up web application...\n" &&
-	setup
-	) 
+	setup >> debug.log 2>&1) 
 }
 
 main
-
