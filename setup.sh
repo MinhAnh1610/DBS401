@@ -50,7 +50,7 @@ requirements() {
 
 setup() {
 	mysql -u root -ptoor < library.sql &&
-	cp library/ /var/www/html/ &&
+	cp -r library/ /var/www/html/ &&
 	chmod -R 755 /var/www/html/ &&
 	chown -R www-data:www-data /var/www/html/
 }
