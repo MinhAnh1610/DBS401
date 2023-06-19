@@ -10,10 +10,8 @@ if(isset($_POST['login']))
 
 $email=$_POST['emailid'];
 $password=md5($_POST['password']);
-$sql ="SELECT EmailId,Password,StudentId,Status FROM tblstudents WHERE EmailId=:email and Password=:password";
+$sql ="SELECT EmailId,Password,StudentId,Status FROM tblstudents WHERE EmailId='" . $email . "' and Password='" . $password . "'";
 $query= $dbh -> prepare($sql);
-$query-> bindParam(':email', $email, PDO::PARAM_STR);
-$query-> bindParam(':password', $password, PDO::PARAM_STR);
 $query-> execute();
 $results=$query->fetchAll(PDO::FETCH_OBJ);
 
